@@ -1,0 +1,289 @@
+---
+title: "MRT main"
+author: "Samuel Montalvo, Ph.D"
+date: "2024-12-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(ggprism)
+library(lme4)
+library(lmerTest)
+library(janitor)
+```
+
+# Load data
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+```{r cars}
+# Load the specific sheet from the Excel file
+key_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+                               sheet = "demographics_key") %>% select(-name)
+
+isokinetic_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+                               sheet = "isokinetic") 
+
+strength_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+                               sheet = "Isometric-1RM") 
+
+dexa_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+                               sheet = "DEXA") 
+
+dexa_data <- clean_names(dexa_data)
+```
+
+
+```{r}
+head(key_data)
+```
+
+```{r}
+strengt_data_best <- strength_data %>%
+  group_by(id, time) %>% 
+  summarize(
+    max_isometric_bp = max(isometric_bp, na.rm = TRUE),
+    max_isometric_mtp = max(isometric_mtp, na.rm = TRUE),
+    max_onerm_bp = max(onerm_bp, na.rm = TRUE),
+    max_onerm_lp = max(onerm_lp, na.rm = TRUE)
+  )
+strengt_data_best
+```
+
+
+
+```{r}
+df <- strengt_data_best %>% left_join(key_data, by ="id") %>% 
+  select(id, group, sex, age, everything()) 
+df
+```
+
+```{r}
+df$time <- factor(df$time, levels = c("pre", "post"))
+
+```
+
+```{r}
+library(ggpubr)
+library(dplyr)
+
+# 1) Compute pairwise comparisons
+stats <- compare_means(
+  formula = max_onerm_bp ~ time,
+  group.by = "group",       # Because you want to do this within each 'group'
+  data = df,
+  paired = TRUE,
+  p.adjust.method = "bonferroni"
+)
+
+# Check out the result
+stats
+# This should give you columns like: .y., group, p, p.adj, etc.
+
+# 2) Make your ggpaired plot
+p <- ggpaired(
+  data       = df,
+  x          = "time",
+  y          = "max_onerm_bp",
+  id         = "id",
+  color      = "group",
+  line.color = "gray",
+  line.size  = 0.4,
+  palette    = "npg",
+  facet.by   = "group",
+  ylab       = "1RM Bench Press (kg)",
+  xlab       = "time"
+) +
+  theme_prism()
+
+# 3) Add the adjusted p-values from stats
+p + stat_pvalue_manual(
+  data = stats,
+  label = "p.adj",         # or "p.adj.signif" for significance stars
+  y.position = c(max(df$max_onerm_bp) + 5),  # adjust as needed
+  tip.length = 0.01
+)
+
+```
+
+
+```{r}
+library(ggpubr)
+library(dplyr)
+
+# 1) Compute pairwise comparisons
+stats <- compare_means(
+  formula = max_onerm_lp ~ time,
+  group.by = "group",       # Because you want to do this within each 'group'
+  data = df,
+  paired = TRUE,
+  p.adjust.method = "bonferroni"
+)
+
+# Check out the result
+stats
+# This should give you columns like: .y., group, p, p.adj, etc.
+
+# 2) Make your ggpaired plot
+p <- ggpaired(
+  data       = df,
+  x          = "time",
+  y          = "max_onerm_lp",
+  id         = "id",
+  color      = "group",
+  line.color = "gray",
+  line.size  = 0.4,
+  palette    = "npg",
+  facet.by   = "group",
+  ylab       = "1RM Leg Press (kg)",
+  xlab       = "time"
+) +
+  theme_prism()
+
+# 3) Add the adjusted p-values from stats
+p + stat_pvalue_manual(
+  data = stats,
+  label = "p.adj",         # or "p.adj.signif" for significance stars
+  y.position = c(max(df$max_onerm_lp) + 5),  # adjust as needed
+  tip.length = 0.01
+)
+
+```
+
+```{r}
+ggpaired(
+  data       = df,
+  x          = "time",
+  y          = "max_onerm_bp",
+  id         = "id",            # <--- specify your subject identifier here
+  color      = "group",
+  line.color = "gray",
+  line.size  = 0.4,
+  palette    = "npg",
+  facet.by   = "group",
+  ylab       = "1RM Bench Press (kg)",
+  xlab       = "time"
+)+
+  stat_pvalue_manual(
+    pairwise.test, label = "p.adj", 
+    y.position = c(29, 35, 39)
+  ) +
+  theme_prism()
+```
+
+
+
+```{r}
+ggpaired(
+  data       = df,
+  x          = "time",
+  y          = "max_onerm_lp",
+  id         = "id",            # <--- specify your subject identifier here
+  color      = "group",
+  line.color = "gray",
+  line.size  = 0.4,
+  palette    = "npg",
+  facet.by   = "group",
+  ylab       = "1RM Leg Press (kg)",
+  xlab       = "time"
+) +
+  stat_compare_means(label = "p.format", paired = TRUE) +
+  theme_prism()
+```
+
+
+```{r}
+model1 <- lmer(max_onerm_lp ~ time*group + (1|id),data=df)
+summary(model1)
+```
+
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+em <- emmeans(model1, ~ time * group)
+em
+```
+
+```{r}
+contrast(
+  em,
+  method = list(
+    "MRT_pre_vs_post" = c(0, 0,  1, -1,  0,  0)),
+  adjust = "holm"  # or "bonferroni", "holm", etc.
+)
+```
+
+```{r}
+contrast(
+  em,
+  method = list(
+    "WRT_pre_vs_post" = c(0, 0,  0,  0,  1, -1)
+  ),
+  adjust = "holm"  # or "bonferroni", "holm", etc.
+)
+```
+
+
+```{r}
+em <- emmeans(model1, ~ time * group)  # your emmGrid
+
+contrast(
+  em,
+  method = list(
+    "MRT vs. WRT (post-pre)" = c(0, 0, -1, 1, 1, -1)
+  ),
+  adjust = "none"  # or "bonferroni", "holm", ...
+)
+
+```
+
+```{r}
+pairs(em, simple = "group", by = "time")
+
+```
+
+
+
+```{r}
+df_dexa <- dexa_data %>% left_join(key_data, by ="id") %>% 
+  select(id, group, sex, age, everything()) 
+df_dexa
+```
+
+
+
+
+```{r}
+model1 <- lmer(lean_g_total ~ time*group* sex + age + (1|id),data=df_dexa)
+summary(model1)
+```
+
+
+```{r}
+model1 <- lmer(fat_g_total ~ time*group + (1|id),data=df_dexa)
+summary(model1)
+```
+
+
+```{r}
+ggpaired(
+  data       = df_dexa,
+  x          = "time",
+  y          = "lean_g_total",
+  id         = "id",            # <--- specify your subject identifier here
+  color      = "group",
+  line.color = "gray",
+  line.size  = 0.4,
+  palette    = "npg",
+  facet.by   = "group",
+  ylab       = "g",
+  xlab       = "time"
+) +
+  stat_compare_means(label = "p.format", paired = TRUE) +
+  theme_prism()
+```
