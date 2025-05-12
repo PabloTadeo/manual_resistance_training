@@ -22,193 +22,297 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 ```{r cars}
 # Load the specific sheet from the Excel file
-key_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
-                               sheet = "demographics_key") %>% select(-name)
+key_data <- read_excel("mrt_data_clean.xlsx", 
+                               sheet = "demographics_key") 
 
-isokinetic_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+isokinetic_data <- read_excel("mrt_data_clean.xlsx", 
                                sheet = "isokinetic") 
 
-strength_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+strength_data <- read_excel("mrt_data_clean.xlsx", 
                                sheet = "Isometric-1RM") 
 
-dexa_data <- read_excel("C:\\Users\\Samuel\\OneDrive\\Documents\\GitHub\\manual_resistance_training\\mrt_data_clean.xlsx", 
+dexa_data <- read_excel("mrt_data_clean.xlsx", 
                                sheet = "DEXA") 
 
 dexa_data <- clean_names(dexa_data)
 ```
 
-
 ```{r}
-head(key_data)
-```
+vars_to_max <- c("isometric_bp", "isometric_mtp",
+                 "onerm_bp", "onerm_lp")
 
-```{r}
-strengt_data_best <- strength_data %>%
-  group_by(id, time) %>% 
+strength_data <- strength_data %>%
+  group_by(id, time) %>%
   summarize(
-    max_isometric_bp = max(isometric_bp, na.rm = TRUE),
-    max_isometric_mtp = max(isometric_mtp, na.rm = TRUE),
-    max_onerm_bp = max(onerm_bp, na.rm = TRUE),
-    max_onerm_lp = max(onerm_lp, na.rm = TRUE)
+    across(all_of(vars_to_max),
+           ~ max(.x, na.rm = TRUE),
+           .names = "max_{col}"),
+    .groups = "drop"
   )
-strengt_data_best
+strength_data
 ```
 
 
 
 ```{r}
-df <- strengt_data_best %>% left_join(key_data, by ="id") %>% 
-  select(id, group, sex, age, everything()) 
-df
+df <- key_data %>% left_join(isokinetic_data, by= "id") 
+
+merged_df <- df %>%
+  left_join(strength_data, by= c( "id","time")) %>%
+  left_join(dexa_data, by= c( "id","time")) 
+
+merged_df$time <- factor(merged_df$time,
+                         levels = c("pre", "post"))
+
+merged_df
 ```
 
-```{r}
-df$time <- factor(df$time, levels = c("pre", "post"))
+# DEXA 
 
+```{r}
+merged_df <- merged_df %>% mutate(lean_kg_total = lean_g_total * 0.001)
 ```
+## Doble interaction model
+merged_df
 
 ```{r}
-library(ggpubr)
-library(dplyr)
-
-# 1) Compute pairwise comparisons
-stats <- compare_means(
-  formula = max_onerm_bp ~ time,
-  group.by = "group",       # Because you want to do this within each 'group'
-  data = df,
-  paired = TRUE,
-  p.adjust.method = "bonferroni"
-)
-
-# Check out the result
-stats
-# This should give you columns like: .y., group, p, p.adj, etc.
-
-# 2) Make your ggpaired plot
-p <- ggpaired(
-  data       = df,
-  x          = "time",
-  y          = "max_onerm_bp",
-  id         = "id",
-  color      = "group",
-  line.color = "gray",
-  line.size  = 0.4,
-  palette    = "npg",
-  facet.by   = "group",
-  ylab       = "1RM Bench Press (kg)",
-  xlab       = "time"
-) +
-  theme_prism()
-
-# 3) Add the adjusted p-values from stats
-p + stat_pvalue_manual(
-  data = stats,
-  label = "p.adj",         # or "p.adj.signif" for significance stars
-  y.position = c(max(df$max_onerm_bp) + 5),  # adjust as needed
-  tip.length = 0.01
-)
-
-```
-
-
-```{r}
-library(ggpubr)
-library(dplyr)
-
-# 1) Compute pairwise comparisons
-stats <- compare_means(
-  formula = max_onerm_lp ~ time,
-  group.by = "group",       # Because you want to do this within each 'group'
-  data = df,
-  paired = TRUE,
-  p.adjust.method = "bonferroni"
-)
-
-# Check out the result
-stats
-# This should give you columns like: .y., group, p, p.adj, etc.
-
-# 2) Make your ggpaired plot
-p <- ggpaired(
-  data       = df,
-  x          = "time",
-  y          = "max_onerm_lp",
-  id         = "id",
-  color      = "group",
-  line.color = "gray",
-  line.size  = 0.4,
-  palette    = "npg",
-  facet.by   = "group",
-  ylab       = "1RM Leg Press (kg)",
-  xlab       = "time"
-) +
-  theme_prism()
-
-# 3) Add the adjusted p-values from stats
-p + stat_pvalue_manual(
-  data = stats,
-  label = "p.adj",         # or "p.adj.signif" for significance stars
-  y.position = c(max(df$max_onerm_lp) + 5),  # adjust as needed
-  tip.length = 0.01
-)
-
-```
-
-```{r}
-ggpaired(
-  data       = df,
-  x          = "time",
-  y          = "max_onerm_bp",
-  id         = "id",            # <--- specify your subject identifier here
-  color      = "group",
-  line.color = "gray",
-  line.size  = 0.4,
-  palette    = "npg",
-  facet.by   = "group",
-  ylab       = "1RM Bench Press (kg)",
-  xlab       = "time"
-)+
-  stat_pvalue_manual(
-    pairwise.test, label = "p.adj", 
-    y.position = c(29, 35, 39)
-  ) +
-  theme_prism()
-```
-
-
-
-```{r}
-ggpaired(
-  data       = df,
-  x          = "time",
-  y          = "max_onerm_lp",
-  id         = "id",            # <--- specify your subject identifier here
-  color      = "group",
-  line.color = "gray",
-  line.size  = 0.4,
-  palette    = "npg",
-  facet.by   = "group",
-  ylab       = "1RM Leg Press (kg)",
-  xlab       = "time"
-) +
-  stat_compare_means(label = "p.format", paired = TRUE) +
-  theme_prism()
-```
-
-
-```{r}
-model1 <- lmer(max_onerm_lp ~ time*group + (1|id),data=df)
+model1 <- lmer(lean_kg_total ~ time*group + sex + weight_dxa + (1|id),data=merged_df)
 summary(model1)
 ```
+
+```{r}
+anova(model1)
+```
+
+
+```{r}
+library(emmeans)
+
+emm_overall <- emmeans(model1, ~ time | group)
+contrast(emm_overall, method = "pairwise")
+```
+
+
+
+
+# Leg press
+```{r}
+model_lp <- lmer(max_onerm_lp ~ time*group  + weight_dxa + (1|id),data=merged_df)
+summary(model_lp)
+```
+
 
 ```{r}
 library(emmeans)
 
 # EMMs for the time*group interaction
-em <- emmeans(model1, ~ time * group)
+em <- emmeans(model_lp, ~ time * group)
 em
 ```
 
+
+##  Leg press triple
+```{r}
+model_lp_t <- lmer(max_onerm_lp ~ time*group*sex + weight_dxa + (1|id),data=merged_df)
+summary(model_lp_t)
+```
+
+
+```{r}
+library(emmeans)
+
+emm_overall <- emmeans(model_lp_t, ~ time | group*sex)
+contrast(emm_overall, method = "pairwise")
+```
+#mediation
+
+```{r}
+## --------------- 1.  MRT  versus  Control -------------------------------
+
+df_mrt <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>   # keep only two arms
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>   # Control = 0
+  droplevels()
+
+med_mrt <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt,
+  REML = FALSE
+)
+
+out_mrt <- lme4::lmer(
+  max_onerm_lp  ~ time * group + sex + lean_kg_total  + weight_scale + (1 | id),
+  data = df_mrt,
+  REML = FALSE
+)
+
+set.seed(123)
+mrt_med <- mediate(
+  model.m   = med_mrt,
+  model.y   = out_mrt,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000            # quasi-Bayesian Monte-Carlo draws
+)
+
+summary(mrt_med)      # ACME ≈ 52 kg (p = .042), ADE ≈ –12 kg (ns)
+
+## --------------- 2.  WRT  versus  Control -------------------------------
+
+df_wrt <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>            # only two arms
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+med_wrt <- lme4::lmer(
+  lean_kg_total ~ time * group + sex  + weight_scale + (1 | id),
+  data = df_wrt,
+  REML = FALSE
+)
+
+out_wrt <- lme4::lmer(
+  max_onerm_lp  ~ time * group + sex + lean_kg_total  + weight_scale + (1 | id),
+  data = df_wrt,
+  REML = FALSE
+)
+
+set.seed(123)
+wrt_med <- mediate(
+  model.m   = med_wrt,
+  model.y   = out_wrt,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(wrt_med)      # ACME ≈ 37 kg (p ≈ .21), ADE ≈   6 kg (ns)
+
+
+```
+```{r}
+###############################################################################
+#  Pooled Resistance Training (RT = MRT + WRT) versus Control
+###############################################################################
+
+library(dplyr)
+library(lme4)
+library(mediation)
+
+## 1.  Create a two-level treatment factor (Control, RT)
+df_rt <- merged_df %>%
+  mutate(group_rt = ifelse(group == "Control", "Control", "RT"),
+         group_rt = factor(group_rt, levels = c("Control", "RT")))  %>%
+  droplevels()                               # keep only the two levels
+
+## 2.  Fit the mediator model (lean mass)
+med_rt <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex   + weight_scale + (1 | id),
+  data = df_rt,
+  REML = FALSE
+)
+
+## 3.  Fit the outcome model (strength, includes mediator)
+out_rt <- lme4::lmer(
+  max_onerm_lp  ~ time * group_rt + sex + lean_kg_total  + weight_scale + (1 | id),
+  data = df_rt,
+  REML = FALSE
+)
+
+## 4.  Causal mediation (quasi-Bayesian Monte-Carlo CIs)
+set.seed(123)
+rt_med <- mediate(
+  model.m   = med_rt,
+  model.y   = out_rt,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(rt_med)
+
+```
+
+## Forest plot
+
+```{r}
+
+###############################################################################
+#  Forest plot for MRT, WRT and pooled RT – robust to any mediation version
+###############################################################################
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# ── 1.  Helper to extract ACME & ADE from a mediate object ──────────────────
+extract_med <- function(obj, label){
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg),
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# ── 2.  Build plotting data frame ───────────────────────────────────────────
+df_forest <- bind_rows(
+  extract_med(mrt_med, "MRT vs Control"),
+  extract_med(wrt_med, "WRT vs Control"),
+  extract_med(rt_med,  "RT  vs Control")
+) |>
+  mutate(contrast = factor(contrast,
+           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# ── 3.  Forest plot ─────────────────────────────────────────────────────────
+p <- ggplot(df_forest,
+            aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on leg-press 1 RM (kg)", y = NULL,
+       title = "Indirect (hypertrophy-mediated) and direct effects") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top",
+        panel.grid.major.y = element_blank())
+
+print(p)
+
+ggsave("Forest_ACME_ADE_all_three.png",
+       p, width = 6.5, height = 4.5, dpi = 300)
+
+```
+
+
+
+
+
+### med 2
+
+```{r}
+library(lavaan)
+
+model <- '
+  lean_mass ~ group
+  strength ~ group + lean_mass
+  # Indirect effect
+  ind := group * lean_mass
+'
+
+fit <- sem(model, data = merged_df)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+
+
+```
+
+
+#old
 ```{r}
 contrast(
   em,
