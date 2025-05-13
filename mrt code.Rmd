@@ -13,11 +13,12 @@ library(ggprism)
 library(lme4)
 library(lmerTest)
 library(janitor)
+library(emmeans)
+library(mediation)
+
 ```
 
 # Load data
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 
 ```{r cars}
@@ -67,35 +68,25 @@ merged_df$time <- factor(merged_df$time,
 merged_df
 ```
 
-# DEXA 
+# mixed models 
 
 ```{r}
 merged_df <- merged_df %>% mutate(lean_kg_total = lean_g_total * 0.001)
 ```
-## Doble interaction model
-merged_df
 
+
+## lean muscle mass
 ```{r}
 model1 <- lmer(lean_kg_total ~ time*group + sex + weight_dxa + (1|id),data=merged_df)
 summary(model1)
 ```
 
 ```{r}
-anova(model1)
-```
-
-
-```{r}
-library(emmeans)
-
 emm_overall <- emmeans(model1, ~ time | group)
 contrast(emm_overall, method = "pairwise")
 ```
 
-
-
-
-# Leg press
+## Leg press
 ```{r}
 model_lp <- lmer(max_onerm_lp ~ time*group  + weight_dxa + (1|id),data=merged_df)
 summary(model_lp)
@@ -119,16 +110,15 @@ summary(model_lp_t)
 
 
 ```{r}
-library(emmeans)
-
 emm_overall <- emmeans(model_lp_t, ~ time | group*sex)
 contrast(emm_overall, method = "pairwise")
 ```
+
+
 #mediation
 
 ```{r}
 ## --------------- 1.  MRT  versus  Control -------------------------------
-
 df_mrt <- merged_df |>
   filter(group %in% c("Control", "MRT")) |>   # keep only two arms
   mutate(group = factor(group, levels = c("Control", "MRT"))) |>   # Control = 0
@@ -189,14 +179,13 @@ summary(wrt_med)      # ACME ≈ 37 kg (p ≈ .21), ADE ≈   6 kg (ns)
 
 
 ```
+
+
 ```{r}
 ###############################################################################
 #  Pooled Resistance Training (RT = MRT + WRT) versus Control
 ###############################################################################
 
-library(dplyr)
-library(lme4)
-library(mediation)
 
 ## 1.  Create a two-level treatment factor (Control, RT)
 df_rt <- merged_df %>%
@@ -284,110 +273,10 @@ p <- ggplot(df_forest,
 
 print(p)
 
-ggsave("Forest_ACME_ADE_all_three.png",
+ggsave("Forest_ACME_ADE_all_three_LP.png",
        p, width = 6.5, height = 4.5, dpi = 300)
 
 ```
 
 
 
-
-
-### med 2
-
-```{r}
-library(lavaan)
-
-model <- '
-  lean_mass ~ group
-  strength ~ group + lean_mass
-  # Indirect effect
-  ind := group * lean_mass
-'
-
-fit <- sem(model, data = merged_df)
-summary(fit, fit.measures = TRUE, standardized = TRUE)
-
-
-```
-
-
-#old
-```{r}
-contrast(
-  em,
-  method = list(
-    "MRT_pre_vs_post" = c(0, 0,  1, -1,  0,  0)),
-  adjust = "holm"  # or "bonferroni", "holm", etc.
-)
-```
-
-```{r}
-contrast(
-  em,
-  method = list(
-    "WRT_pre_vs_post" = c(0, 0,  0,  0,  1, -1)
-  ),
-  adjust = "holm"  # or "bonferroni", "holm", etc.
-)
-```
-
-
-```{r}
-em <- emmeans(model1, ~ time * group)  # your emmGrid
-
-contrast(
-  em,
-  method = list(
-    "MRT vs. WRT (post-pre)" = c(0, 0, -1, 1, 1, -1)
-  ),
-  adjust = "none"  # or "bonferroni", "holm", ...
-)
-
-```
-
-```{r}
-pairs(em, simple = "group", by = "time")
-
-```
-
-
-
-```{r}
-df_dexa <- dexa_data %>% left_join(key_data, by ="id") %>% 
-  select(id, group, sex, age, everything()) 
-df_dexa
-```
-
-
-
-
-```{r}
-model1 <- lmer(lean_g_total ~ time*group* sex + age + (1|id),data=df_dexa)
-summary(model1)
-```
-
-
-```{r}
-model1 <- lmer(fat_g_total ~ time*group + (1|id),data=df_dexa)
-summary(model1)
-```
-
-
-```{r}
-ggpaired(
-  data       = df_dexa,
-  x          = "time",
-  y          = "lean_g_total",
-  id         = "id",            # <--- specify your subject identifier here
-  color      = "group",
-  line.color = "gray",
-  line.size  = 0.4,
-  palette    = "npg",
-  facet.by   = "group",
-  ylab       = "g",
-  xlab       = "time"
-) +
-  stat_compare_means(label = "p.format", paired = TRUE) +
-  theme_prism()
-```
