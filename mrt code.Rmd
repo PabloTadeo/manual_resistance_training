@@ -88,7 +88,7 @@ contrast(emm_overall, method = "pairwise")
 
 ## Leg press
 ```{r}
-model_lp <- lmer(max_onerm_lp ~ time*group  + weight_dxa + (1|id),data=merged_df)
+model_lp <- lmer(max_onerm_lp ~ time*group  + weight_scale + (1|id),data=merged_df)
 summary(model_lp)
 ```
 
@@ -104,7 +104,7 @@ em
 
 ##  Leg press triple
 ```{r}
-model_lp_t <- lmer(max_onerm_lp ~ time*group*sex + weight_dxa + (1|id),data=merged_df)
+model_lp_t <- lmer(max_onerm_lp ~ time*group*sex + weight_scale + (1|id),data=merged_df)
 summary(model_lp_t)
 ```
 
