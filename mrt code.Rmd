@@ -72,6 +72,8 @@ merged_df
 
 ```{r}
 merged_df <- merged_df %>% mutate(lean_kg_total = lean_g_total * 0.001)
+#lean_g_arms
+#lean_g_legs
 ```
 
 
