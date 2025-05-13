@@ -79,7 +79,7 @@ merged_df <- merged_df %>% mutate(lean_kg_total = lean_g_total * 0.001)
 
 ## lean muscle mass
 ```{r}
-model1 <- lmer(lean_kg_total ~ time*group + sex + weight_dxa + (1|id),data=merged_df)
+model1 <- lmer(lean_kg_total ~ time*group + sex + weight_scale + (1|id),data=merged_df)
 summary(model1)
 ```
 
@@ -104,10 +104,11 @@ em
 ```
 
 
-##  Leg press triple
+
+### table
 ```{r}
-model_lp_t <- lmer(max_onerm_lp ~ time*group*sex + weight_scale + (1|id),data=merged_df)
-summary(model_lp_t)
+library(sjPlot)
+tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE)
 ```
 
 
