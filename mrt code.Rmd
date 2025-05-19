@@ -99,8 +99,9 @@ summary(model_lp)
 library(emmeans)
 
 # EMMs for the time*group interaction
-em <- emmeans(model_lp, ~ time * group)
-em
+em <- emmeans(model_lp, ~ time | group)
+contrast(em, method = "pairwise")
+
 ```
 
 
@@ -108,7 +109,8 @@ em
 ### table
 ```{r}
 library(sjPlot)
-tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE)
+tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE#, #show.p = FALSE, #p.style = "numeric_stars"
+          )
 ```
 
 
