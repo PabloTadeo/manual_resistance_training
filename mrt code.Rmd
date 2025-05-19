@@ -15,7 +15,7 @@ library(lmerTest)
 library(janitor)
 library(emmeans)
 library(mediation)
-
+library(sjPlot)
 ```
 
 # Load data
@@ -109,8 +109,7 @@ contrast(em, method = "pairwise")
 ### table
 ```{r}
 library(sjPlot)
-tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE#, #show.p = FALSE, #p.style = "numeric_stars"
-          )
+tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE#, #show.p = FALSE, #p.style = "numeric_stars")
 ```
 
 
