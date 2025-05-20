@@ -71,9 +71,18 @@ merged_df
 # mixed models 
 
 ```{r}
-merged_df <- merged_df %>% mutate(lean_kg_total = lean_g_total * 0.001)
-#lean_g_arms
-#lean_g_legs
+merged_df <- merged_df %>%
+  mutate(
+    lean_kg_total = lean_g_total * 0.001,
+    lean_kg_arms = lean_g_arms * 0.001,  # Assuming original is lean_g_arms
+    lean_kg_legs = lean_g_legs * 0.001   # Assuming original is lean_g_legs
+    # Add lines here for Biodex if they need simple mutations, e.g.:
+    # biodex_away_nm = biodex_away_raw * conversion_factor, # Example
+    # biodex_towards_nm = biodex_towards_raw * conversion_factor # Example
+  )
+
+# Verify the new columns have been created (optional check)
+# print(colnames(merged_df))
 ```
 
 
@@ -94,7 +103,6 @@ model_lp <- lmer(max_onerm_lp ~ time*group  + weight_scale + (1|id),data=merged_
 summary(model_lp)
 ```
 
-
 ```{r}
 library(emmeans)
 
@@ -103,7 +111,19 @@ em <- emmeans(model_lp, ~ time | group)
 contrast(em, method = "pairwise")
 
 ```
+##Lean Arms
+```{r}
+model_la <- lmer(lean_kg_arms ~ time*group + sex + weight_scale + (1|id), data=merged_df)
+summary(model_la)
+```
 
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_la <- emmeans(model_la, ~ time | group)
+contrast(emm_la, method = "pairwise")
+```
 
 
 ### table
