@@ -378,5 +378,115 @@ ggsave("Forest_ACME_ADE_all_three_LP.png",
 
 ```
 
+## Mediation: lean_kg_total -> max_isometric_bp (MRT vs Control)
+
+```{r mediation_LKT_isoBP_MRTvsCON}
+# 1. MRT versus Control for max_isometric_bp mediated by lean_kg_total
+
+# Filter data for Control and MRT (reuse df_mrt if appropriate or re-filter for clarity)
+df_mrt_isoBP <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total) - Identical to Samuel's med_mrt
+med_mrt_LKT_isoBP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_total as mediator
+out_mrt_LKT_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_mrt_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKT_isoBP <- mediate(
+  model.m   = med_mrt_LKT_isoBP,
+  model.y   = out_mrt_LKT_isoBP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKT_isoBP)
+```
+## Mediation: lean_kg_total -> max_isometric_bp (WRT vs Control)
+
+```{r mediation_LKT_isoBP_WRTvsCON}
+# 2. WRT versus Control for max_isometric_bp mediated by lean_kg_total
+
+# Filter data for Control and WRT (reuse df_wrt or re-filter)
+df_wrt_isoBP <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total) - Identical to Samuel's med_wrt
+med_wrt_LKT_isoBP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_total as mediator
+out_wrt_LKT_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_wrt_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKT_isoBP <- mediate(
+  model.m   = med_wrt_LKT_isoBP,
+  model.y   = out_wrt_LKT_isoBP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKT_isoBP)
+```
+## Mediation : lean_kg_total -> max_isometric_bp (Pooled RT vs Control)
+
+```{r mediation_LKT_isoBP_RTvsCON}
+# 3. Pooled RT versus Control for max_isometric_bp mediated by lean_kg_total
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_isoBP <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels() # Ensure only these two levels exist if coming from a factor with more
+
+# Mediator model (lean_kg_total)
+med_rt_LKT_isoBP <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_total as mediator
+out_rt_LKT_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group_rt + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_rt_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKT_isoBP <- mediate(
+  model.m   = med_rt_LKT_isoBP,
+  model.y   = out_rt_LKT_isoBP,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKT_isoBP)
+```
 
 
