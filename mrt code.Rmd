@@ -148,6 +148,18 @@ library(emmeans)
 emm_iso_bp <- emmeans(model_iso_bp, ~ time | group)
 contrast(emm_iso_bp, method = "pairwise")
 ```
+## IMPT
+```{r}
+model_imtp <- lmer(max_isometric_mtp ~ time*group + weight_scale + (1|id), data=merged_df)
+summary(model_imtp)
+```
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_imtp <- emmeans(model_imtp, ~ time | group)
+contrast(emm_imtp, method = "pairwise")
+```
 
 
 ### table
