@@ -97,7 +97,7 @@ emm_overall <- emmeans(model1, ~ time | group)
 contrast(emm_overall, method = "pairwise")
 ```
 
-## Leg press
+## leg press
 ```{r}
 model_lp <- lmer(max_onerm_lp ~ time*group  + weight_scale + (1|id),data=merged_df)
 summary(model_lp)
@@ -111,7 +111,7 @@ em <- emmeans(model_lp, ~ time | group)
 contrast(em, method = "pairwise")
 
 ```
-##Lean Arms
+## lean arms
 ```{r}
 model_la <- lmer(lean_kg_arms ~ time*group + sex + weight_scale + (1|id), data=merged_df)
 summary(model_la)
@@ -123,6 +123,18 @@ library(emmeans)
 # EMMs for the time*group interaction
 emm_la <- emmeans(model_la, ~ time | group)
 contrast(emm_la, method = "pairwise")
+```
+## lean press
+```{r}
+model_ll <- lmer(lean_kg_legs ~ time*group + sex + weight_scale + (1|id), data=merged_df)
+summary(model_ll)
+```
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_ll <- emmeans(model_ll, ~ time | group)
+contrast(emm_ll, method = "pairwise")
 ```
 
 
