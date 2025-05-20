@@ -709,4 +709,228 @@ mediation_rt_LKT_IMTP <- mediate(
 
 summary(mediation_rt_LKT_IMTP)
 ```
+## Mediation: lean_kg_total -> away (MRT vs Control)
+
+```{r mediation_LKT_away_MRTvsCON}
+# 1. MRT versus Control for 'away' (Biodex away) mediated by lean_kg_total
+
+# Filter data for Control and MRT
+df_mrt_away <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_mrt_LKT_away <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt_away,
+  REML = FALSE
+)
+
+# Outcome model ('away'), with lean_kg_total as mediator
+out_mrt_LKT_away <- lme4::lmer(
+  away ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_mrt_away,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKT_away <- mediate(
+  model.m   = med_mrt_LKT_away,
+  model.y   = out_mrt_LKT_away,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKT_away)
+```
+
+## Mediation: lean_kg_total -> away (WRT vs Control)
+
+```{r mediation_LKT_away_WRTvsCON}
+# 2. WRT versus Control for 'away' (Biodex away) mediated by lean_kg_total
+
+# Filter data for Control and WRT
+df_wrt_away <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_wrt_LKT_away <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_away,
+  REML = FALSE
+)
+
+# Outcome model ('away'), with lean_kg_total as mediator
+out_wrt_LKT_away <- lme4::lmer(
+  away ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_wrt_away,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKT_away <- mediate(
+  model.m   = med_wrt_LKT_away,
+  model.y   = out_wrt_LKT_away,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKT_away)
+```
+
+## Mediation: lean_kg_total -> away (Pooled RT vs Control)
+
+```{r mediation_LKT_away_RTvsCON}
+# 3. Pooled RT versus Control for 'away' (Biodex away) mediated by lean_kg_total
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_away <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_rt_LKT_away <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_away,
+  REML = FALSE
+)
+
+# Outcome model ('away'), with lean_kg_total as mediator
+out_rt_LKT_away <- lme4::lmer(
+  away ~ time * group_rt + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_rt_away,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKT_away <- mediate(
+  model.m   = med_rt_LKT_away,
+  model.y   = out_rt_LKT_away,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKT_away)
+```
+
+## Mediation: lean_kg_total -> towards (MRT vs Control)
+
+```{r mediation_LKT_towards_MRTvsCON}
+# 1. MRT versus Control for 'towards' (Biodex towards) mediated by lean_kg_total
+
+# Filter data for Control and MRT
+df_mrt_towards <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_mrt_LKT_towards <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt_towards,
+  REML = FALSE
+)
+
+# Outcome model ('towards'), with lean_kg_total as mediator
+out_mrt_LKT_towards <- lme4::lmer(
+  towards ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_mrt_towards,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKT_towards <- mediate(
+  model.m   = med_mrt_LKT_towards,
+  model.y   = out_mrt_LKT_towards,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKT_towards)
+```
+## Mediation: lean_kg_total -> towards (WRT vs Control)
+
+```{r mediation_LKT_towards_WRTvsCON}
+# 2. WRT versus Control for 'towards' (Biodex towards) mediated by lean_kg_total
+
+# Filter data for Control and WRT
+df_wrt_towards <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_wrt_LKT_towards <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_towards,
+  REML = FALSE
+)
+
+# Outcome model ('towards'), with lean_kg_total as mediator
+out_wrt_LKT_towards <- lme4::lmer(
+  towards ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_wrt_towards,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKT_towards <- mediate(
+  model.m   = med_wrt_LKT_towards,
+  model.y   = out_wrt_LKT_towards,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKT_towards)
+```
+
+## Mediation: lean_kg_total -> towards (Pooled RT vs Control)
+
+```{r mediation_LKT_towards_RTvsCON}
+# 3. Pooled RT versus Control for 'towards' (Biodex towards) mediated by lean_kg_total
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_towards <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_rt_LKT_towards <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_towards,
+  REML = FALSE
+)
+
+# Outcome model ('towards'), with lean_kg_total as mediator
+out_rt_LKT_towards <- lme4::lmer(
+  towards ~ time * group_rt + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_rt_towards,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKT_towards <- mediate(
+  model.m   = med_rt_LKT_towards,
+  model.y   = out_rt_LKT_towards,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKT_towards)
+```
 
