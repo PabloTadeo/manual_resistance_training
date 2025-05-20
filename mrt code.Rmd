@@ -148,6 +148,63 @@ library(emmeans)
 emm_iso_bp <- emmeans(model_iso_bp, ~ time | group)
 contrast(emm_iso_bp, method = "pairwise")
 ```
+### Forest Plot iso bench
+
+```{r forest_plot_iso_bp}
+# Ensure necessary libraries are loaded (dplyr, ggplot2, scales)
+# library(dplyr) # Typically loaded in setup
+# library(ggplot2) # Typically loaded in setup
+# library(scales) # Typically loaded in setup
+
+# 1. Helper function to extract ACME & ADE (remains the same)
+extract_med_iso_bp <- function(obj, label){ # Renamed for clarity if running interactively
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg),
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# 2. Build plotting data frame for Isometric Bench Press
+#    Replace with your actual mediation objects for IsoBP
+#    These are examples based on our naming convention:
+#    mediation_mrt_LKT_isoBP, mediation_wrt_LKT_isoBP, mediation_rt_LKT_isoBP
+
+df_forest_iso_bp <- bind_rows(
+  extract_med_iso_bp(mediation_mrt_LKT_isoBP, "MRT vs Control"),
+  extract_med_iso_bp(mediation_wrt_LKT_isoBP, "WRT vs Control"),
+  extract_med_iso_bp(mediation_rt_LKT_isoBP,  "RT  vs Control") 
+) |>
+  mutate(contrast = factor(contrast,
+                           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# 3. Forest plot for Isometric Bench Press
+p_iso_bp <- ggplot(df_forest_iso_bp,
+                   aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on Isometric Bench Press (units)", # Adjusted X-axis label
+       y = NULL,
+       title = "Indirect (LKT-mediated) and direct effects on Isometric Bench Press") + # Adjusted title
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top",
+        panel.grid.major.y = element_blank())
+
+print(p_iso_bp)
+
+ggsave("Forest_ACME_ADE_IsoBenchPress_LKT.png", # Adjusted filename
+       p_iso_bp, width = 6.5, height = 4.5, dpi = 300)
+```
+
 ## dynamic bench press (1RM) 
 
 ```{r}
@@ -162,6 +219,65 @@ library(emmeans)
 emm_bp <- emmeans(model_bp, ~ time | group)
 contrast(emm_bp, method = "pairwise")
 ```
+### Forest Plot Dynamic Bench Press (mediated by Lean Mass Total)
+
+```{r forest_plot_dynamic_bp}
+# Ensure necessary libraries are loaded
+# library(dplyr) # Typically loaded in setup
+# library(ggplot2) # Typically loaded in setup
+# library(scales) # Typically loaded in setup
+
+# 1. Helper function to extract ACME & ADE from a mediate object 
+#    (This function can be defined once globally in your Rmd)
+#    If you haven't defined it globally, you can include it here.
+#    For this example, I'll assume it might be redefined or named uniquely
+#    if you prefer to keep each plot's code self-contained.
+extract_med_dbp <- function(obj, label){ # DBP for Dynamic Bench Press
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg), # obj$d.avg is ACME, obj$z.avg is ADE
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# 2. Build plotting data frame for Dynamic Bench Press
+#    Using the mediation objects for Dynamic Bench Press (max_onerm_bp)
+#    mediated by Lean Mass Total (LKT)
+
+df_forest_dbp <- bind_rows(
+  extract_med_dbp(mediation_mrt_LKT_maxBP, "MRT vs Control"),
+  extract_med_dbp(mediation_wrt_LKT_maxBP, "WRT vs Control"),
+  extract_med_dbp(mediation_rt_LKT_maxBP,  "RT  vs Control") 
+) |>
+  mutate(contrast = factor(contrast,
+                           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# 3. Forest plot for Dynamic Bench Press
+p_dbp <- ggplot(df_forest_dbp,
+                aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") + # [cite: 1]
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"), # [cite: 1]
+                      labels = c("Indirect (ACME)", "Direct (ADE)"), # [cite: 1]
+                      name   = NULL) + # [cite: 1]
+  scale_x_continuous(breaks = pretty_breaks(7)) + # [cite: 1]
+  labs(x = "Effect on Dynamic Bench Press 1RM (kg)", # Adjusted X-axis label
+       y = NULL, # [cite: 1]
+       title = "Indirect (LKT-mediated) and direct effects on Dynamic Bench Press") + # Adjusted title
+  theme_minimal(base_size = 13) + # [cite: 1]
+  theme(legend.position    = "top", # [cite: 1]
+        panel.grid.major.y = element_blank()) # [cite: 1]
+
+print(p_dbp)
+
+ggsave("Forest_ACME_ADE_DynamicBenchPress_LKT.png", # Adjusted filename
+       p_dbp, width = 6.5, height = 4.5, dpi = 300) # [cite: 1]
+```
 
 ## IMPT
 ```{r}
@@ -175,6 +291,66 @@ library(emmeans)
 emm_imtp <- emmeans(model_imtp, ~ time | group)
 contrast(emm_imtp, method = "pairwise")
 ```
+### Forest Plot IMPT (mediated by Lean Mass Total)
+
+```{r forest_plot_imtp}
+# Ensure necessary libraries are loaded
+# library(dplyr)
+# library(ggplot2)
+# library(scales)
+
+# 1. Helper function to extract ACME & ADE from a mediate object 
+#    (Assuming 'extract_med' is globally defined or redefine/rename as needed)
+#    If you defined extract_med_dbp previously, you can reuse it or define a new one.
+#    For consistency, let's assume a global 'extract_med' or use a specific name.
+extract_med_imtp <- function(obj, label){ # IMTP
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg),
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# 2. Build plotting data frame for IMTP
+#    Using the mediation objects for IMTP (max_isometric_mtp)
+#    mediated by Lean Mass Total (LKT)
+
+df_forest_imtp <- bind_rows(
+  extract_med_imtp(mediation_mrt_LKT_IMTP, "MRT vs Control"),
+  extract_med_imtp(mediation_wrt_LKT_IMTP, "WRT vs Control"),
+  extract_med_imtp(mediation_rt_LKT_IMTP,  "RT  vs Control") 
+) |>
+  mutate(contrast = factor(contrast,
+                           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# 3. Forest plot for IMTP
+p_imtp <- ggplot(df_forest_imtp,
+                 aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on IMTP (units)", # Adjusted X-axis label
+       y = NULL,
+       title = "Indirect (LKT-mediated) and direct effects on IMTP") + # Adjusted title
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top",
+        panel.grid.major.y = element_blank())
+
+print(p_imtp)
+
+ggsave("Forest_ACME_ADE_IMTP_LKT.png", # Adjusted filename
+       p_imtp, width = 6.5, height = 4.5, dpi = 300)
+```
+
+
 ## biodex away
 ```{r}
 model_biodex_away <- lmer(away ~ time*group + weight_scale + (1|id), data=merged_df)
@@ -187,6 +363,64 @@ library(emmeans)
 emm_biodex_away <- emmeans(model_biodex_away, ~ time | group)
 contrast(emm_biodex_away, method = "pairwise")
 ```
+### Forest Plot BIODEX Away (mediated by Lean Mass Total)
+
+```{r forest_plot_biodex_away}
+# Ensure necessary libraries are loaded
+# library(dplyr)
+# library(ggplot2)
+# library(scales)
+
+# 1. Helper function to extract ACME & ADE from a mediate object 
+#    (Assuming 'extract_med' is globally defined or redefine/rename as needed)
+extract_med_bda <- function(obj, label){ # BDA for BIODEX Away
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg),
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# 2. Build plotting data frame for BIODEX Away
+#    Using the mediation objects for 'away' (BIODEX Away)
+#    mediated by Lean Mass Total (LKT)
+
+df_forest_bda <- bind_rows(
+  extract_med_bda(mediation_mrt_LKT_away, "MRT vs Control"),
+  extract_med_bda(mediation_wrt_LKT_away, "WRT vs Control"),
+  extract_med_bda(mediation_rt_LKT_away,  "RT  vs Control") 
+) |>
+  mutate(contrast = factor(contrast,
+                           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# 3. Forest plot for BIODEX Away
+p_bda <- ggplot(df_forest_bda,
+                aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on BIODEX Away (units)", # Adjusted X-axis label
+       y = NULL,
+       title = "Indirect (LKT-mediated) and direct effects on BIODEX Away") + # Adjusted title
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top",
+        panel.grid.major.y = element_blank())
+
+print(p_bda)
+
+ggsave("Forest_ACME_ADE_BiodexAway_LKT.png", # Adjusted filename
+       p_bda, width = 6.5, height = 4.5, dpi = 300)
+```
+
+
 ## biodex towards
 ```{r}
 model_biodex_towards <- lmer(towards ~ time*group + weight_scale + (1|id), data=merged_df)
@@ -199,6 +433,62 @@ library(emmeans)
 # EMMs for the time*group interaction
 emm_biodex_towards <- emmeans(model_biodex_towards, ~ time | group)
 contrast(emm_biodex_towards, method = "pairwise")
+```
+### Forest Plot: BIODEX Towards (mediated by Lean Mass Total)
+
+```{r forest_plot_biodex_towards}
+# Ensure necessary libraries are loaded
+# library(dplyr)
+# library(ggplot2)
+# library(scales)
+
+# 1. Helper function to extract ACME & ADE from a mediate object 
+#    (Assuming 'extract_med' is globally defined or redefine/rename as needed)
+extract_med_bdt <- function(obj, label){ # BDT for BIODEX Towards
+  data.frame(
+    term      = c("ACME", "ADE"),
+    estimate  = c(obj$d.avg,  obj$z.avg),
+    conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
+    conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
+    contrast  = label
+  )
+}
+
+# 2. Build plotting data frame for BIODEX Towards
+#    Using the mediation objects for 'towards' (BIODEX Towards)
+#    mediated by Lean Mass Total (LKT)
+
+df_forest_bdt <- bind_rows(
+  extract_med_bdt(mediation_mrt_LKT_towards, "MRT vs Control"),
+  extract_med_bdt(mediation_wrt_LKT_towards, "WRT vs Control"),
+  extract_med_bdt(mediation_rt_LKT_towards,  "RT  vs Control") 
+) |>
+  mutate(contrast = factor(contrast,
+                           levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
+
+# 3. Forest plot for BIODEX Towards
+p_bdt <- ggplot(df_forest_bdt,
+                aes(estimate, contrast, colour = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
+                  position = position_dodge(width = .6), size = .9) +
+  geom_text(aes(label = round(estimate, 1)),
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on BIODEX Towards (units)", # Adjusted X-axis label
+       y = NULL,
+       title = "Indirect (LKT-mediated) and direct effects on BIODEX Towards") + # Adjusted title
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top",
+        panel.grid.major.y = element_blank())
+
+print(p_bdt)
+
+ggsave("Forest_ACME_ADE_BiodexTowards_LKT.png", # Adjusted filename
+       p_bdt, width = 6.5, height = 4.5, dpi = 300)
 ```
 
 
@@ -932,5 +1222,118 @@ mediation_rt_LKT_towards <- mediate(
 )
 
 summary(mediation_rt_LKT_towards)
+```
+
+## Mediation:lean_kg_arms -> max_isometric_bp (MRT vs Control)
+
+```{r mediation_LKA_isoBP_MRTvsCON}
+# 1. MRT versus Control for max_isometric_bp mediated by lean_kg_arms
+
+# Filter data for Control and MRT
+df_mrt_LKA_isoBP <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_arms)
+med_mrt_LKA_isoBP <- lme4::lmer(
+  lean_kg_arms ~ time * group + sex + weight_scale + (1 | id), # Using lean_kg_arms as DV
+  data = df_mrt_LKA_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_arms as mediator
+out_mrt_LKA_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group + sex + lean_kg_arms + weight_scale + (1 | id), # Using lean_kg_arms as predictor
+  data = df_mrt_LKA_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKA_isoBP <- mediate(
+  model.m   = med_mrt_LKA_isoBP,
+  model.y   = out_mrt_LKA_isoBP,
+  treat     = "group",
+  mediator  = "lean_kg_arms", # Mediator is lean_kg_arms
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKA_isoBP)
+```
+
+## Mediation: lean_kg_arms -> max_isometric_bp (WRT vs Control)
+
+```{r mediation_LKA_isoBP_WRTvsCON}
+# 2. WRT versus Control for max_isometric_bp mediated by lean_kg_arms
+
+# Filter data for Control and WRT
+df_wrt_LKA_isoBP <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_arms)
+med_wrt_LKA_isoBP <- lme4::lmer(
+  lean_kg_arms ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_LKA_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_arms as mediator
+out_wrt_LKA_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group + sex + lean_kg_arms + weight_scale + (1 | id),
+  data = df_wrt_LKA_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKA_isoBP <- mediate(
+  model.m   = med_wrt_LKA_isoBP,
+  model.y   = out_wrt_LKA_isoBP,
+  treat     = "group",
+  mediator  = "lean_kg_arms",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKA_isoBP)
+```
+
+## Mediation: lean_kg_arms -> max_isometric_bp (Pooled RT vs Control)
+
+```{r mediation_LKA_isoBP_RTvsCON}
+# 3. Pooled RT versus Control for max_isometric_bp mediated by lean_kg_arms
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_LKA_isoBP <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels()
+
+# Mediator model (lean_kg_arms)
+med_rt_LKA_isoBP <- lme4::lmer(
+  lean_kg_arms ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_LKA_isoBP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_bp), with lean_kg_arms as mediator
+out_rt_LKA_isoBP <- lme4::lmer(
+  max_isometric_bp ~ time * group_rt + sex + lean_kg_arms + weight_scale + (1 | id),
+  data = df_rt_LKA_isoBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKA_isoBP <- mediate(
+  model.m   = med_rt_LKA_isoBP,
+  model.y   = out_rt_LKA_isoBP,
+  treat     = "group_rt",
+  mediator  = "lean_kg_arms",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKA_isoBP)
 ```
 
