@@ -160,6 +160,31 @@ library(emmeans)
 emm_imtp <- emmeans(model_imtp, ~ time | group)
 contrast(emm_imtp, method = "pairwise")
 ```
+## biodex away
+```{r}
+model_biodex_away <- lmer(away ~ time*group + weight_scale + (1|id), data=merged_df)
+summary(model_biodex_away)
+```
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_biodex_away <- emmeans(model_biodex_away, ~ time | group)
+contrast(emm_biodex_away, method = "pairwise")
+```
+## biodex towards
+```{r}
+model_biodex_towards <- lmer(towards ~ time*group + weight_scale + (1|id), data=merged_df)
+summary(model_biodex_towards)
+```
+
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_biodex_towards <- emmeans(model_biodex_towards, ~ time | group)
+contrast(emm_biodex_towards, method = "pairwise")
+```
 
 
 ### table
