@@ -488,5 +488,115 @@ mediation_rt_LKT_isoBP <- mediate(
 
 summary(mediation_rt_LKT_isoBP)
 ```
+## Mediation: lean_kg_total -> max_onerm_bp (MRT vs Control)
 
+```{r mediation_LKT_maxBP_MRTvsCON}
+# 1. MRT versus Control for max_onerm_bp mediated by lean_kg_total
+
+# Filter data for Control and MRT
+df_mrt_maxBP <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_mrt_LKT_maxBP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt_maxBP,
+  REML = FALSE
+)
+
+# Outcome model (max_onerm_bp), with lean_kg_total as mediator
+out_mrt_LKT_maxBP <- lme4::lmer(
+  max_onerm_bp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_mrt_maxBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKT_maxBP <- mediate(
+  model.m   = med_mrt_LKT_maxBP,
+  model.y   = out_mrt_LKT_maxBP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKT_maxBP)
+```
+## Mediation: lean_kg_total -> max_onerm_bp (WRT vs Control)
+
+
+```{r mediation_LKT_maxBP_WRTvsCON}
+# 2. WRT versus Control for max_onerm_bp mediated by lean_kg_total
+
+# Filter data for Control and WRT
+df_wrt_maxBP <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_wrt_LKT_maxBP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_maxBP,
+  REML = FALSE
+)
+
+# Outcome model (max_onerm_bp), with lean_kg_total as mediator
+out_wrt_LKT_maxBP <- lme4::lmer(
+  max_onerm_bp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_wrt_maxBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKT_maxBP <- mediate(
+  model.m   = med_wrt_LKT_maxBP,
+  model.y   = out_wrt_LKT_maxBP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKT_maxBP)
+```
+## Mediation: lean_kg_total -> max_onerm_bp (Pooled RT vs Control) 
+
+```{r mediation_LKT_maxBP_RTvsCON}
+# 3. Pooled RT versus Control for max_onerm_bp mediated by lean_kg_total
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_maxBP <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_rt_LKT_maxBP <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_maxBP,
+  REML = FALSE
+)
+
+# Outcome model (max_onerm_bp), with lean_kg_total as mediator
+out_rt_LKT_maxBP <- lme4::lmer(
+  max_onerm_bp ~ time * group_rt + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_rt_maxBP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKT_maxBP <- mediate(
+  model.m   = med_rt_LKT_maxBP,
+  model.y   = out_rt_LKT_maxBP,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKT_maxBP)
+```
 
