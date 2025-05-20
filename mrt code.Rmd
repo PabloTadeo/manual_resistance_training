@@ -599,4 +599,114 @@ mediation_rt_LKT_maxBP <- mediate(
 
 summary(mediation_rt_LKT_maxBP)
 ```
+## Mediation: lean_kg_total -> max_isometric_mtp (MRT vs Control)
+
+```{r mediation_LKT_IMTP_MRTvsCON}
+# 1. MRT versus Control for max_isometric_mtp mediated by lean_kg_total
+
+# Filter data for Control and MRT
+df_mrt_IMTP <- merged_df |>
+  filter(group %in% c("Control", "MRT")) |>
+  mutate(group = factor(group, levels = c("Control", "MRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_mrt_LKT_IMTP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_mrt_IMTP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_mtp), with lean_kg_total as mediator
+out_mrt_LKT_IMTP <- lme4::lmer(
+  max_isometric_mtp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_mrt_IMTP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_mrt_LKT_IMTP <- mediate(
+  model.m   = med_mrt_LKT_IMTP,
+  model.y   = out_mrt_LKT_IMTP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_mrt_LKT_IMTP)
+```
+## Mediation: lean_kg_total -> max_isometric_mtp (WRT vs Control)
+
+```{r mediation_LKT_IMTP_WRTvsCON}
+# 2. WRT versus Control for max_isometric_mtp mediated by lean_kg_total
+
+# Filter data for Control and WRT
+df_wrt_IMTP <- merged_df |>
+  filter(group %in% c("Control", "WRT")) |>
+  mutate(group = factor(group, levels = c("Control", "WRT"))) |>
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_wrt_LKT_IMTP <- lme4::lmer(
+  lean_kg_total ~ time * group + sex + weight_scale + (1 | id),
+  data = df_wrt_IMTP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_mtp), with lean_kg_total as mediator
+out_wrt_LKT_IMTP <- lme4::lmer(
+  max_isometric_mtp ~ time * group + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_wrt_IMTP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_wrt_LKT_IMTP <- mediate(
+  model.m   = med_wrt_LKT_IMTP,
+  model.y   = out_wrt_LKT_IMTP,
+  treat     = "group",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_wrt_LKT_IMTP)
+```
+## Mediation: lean_kg_total -> max_isometric_mtp (Pooled RT vs Control)
+
+```{r mediation_LKT_IMTP_RTvsCON}
+# 3. Pooled RT versus Control for max_isometric_mtp mediated by lean_kg_total
+
+# Create a two-level treatment factor (Control, RT)
+df_rt_IMTP <- merged_df %>%
+  mutate(
+    group_rt = ifelse(group == "Control", "Control", "RT"),
+    group_rt = factor(group_rt, levels = c("Control", "RT"))
+  ) %>%
+  droplevels()
+
+# Mediator model (lean_kg_total)
+med_rt_LKT_IMTP <- lme4::lmer(
+  lean_kg_total ~ time * group_rt + sex + weight_scale + (1 | id),
+  data = df_rt_IMTP,
+  REML = FALSE
+)
+
+# Outcome model (max_isometric_mtp), with lean_kg_total as mediator
+out_rt_LKT_IMTP <- lme4::lmer(
+  max_isometric_mtp ~ time * group_rt + sex + lean_kg_total + weight_scale + (1 | id),
+  data = df_rt_IMTP,
+  REML = FALSE
+)
+
+set.seed(123) # for reproducibility
+mediation_rt_LKT_IMTP <- mediate(
+  model.m   = med_rt_LKT_IMTP,
+  model.y   = out_rt_LKT_IMTP,
+  treat     = "group_rt",
+  mediator  = "lean_kg_total",
+  sims      = 1000
+)
+
+summary(mediation_rt_LKT_IMTP)
+```
 
