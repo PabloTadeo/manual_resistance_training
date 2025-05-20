@@ -136,6 +136,18 @@ library(emmeans)
 emm_ll <- emmeans(model_ll, ~ time | group)
 contrast(emm_ll, method = "pairwise")
 ```
+## iso benh press
+```{r}
+model_iso_bp <- lmer(max_isometric_bp ~ time*group + weight_scale + (1|id), data=merged_df)
+summary(model_iso_bp)
+```
+```{r}
+library(emmeans)
+
+# EMMs for the time*group interaction
+emm_iso_bp <- emmeans(model_iso_bp, ~ time | group)
+contrast(emm_iso_bp, method = "pairwise")
+```
 
 
 ### table
