@@ -88,59 +88,46 @@ merged_df <- merged_df %>%
 #Table 1.Baseline Participant Characteristics
 
 ```{r}
-# (Your existing code to generate the 'table1' gtsummary object)
-# table1 <- baseline_vars_df |> tbl_summary(...) |> add_p() ...
-
-# Load the gt and htmltools packages (if not installed, run install.packages("htmltools"))
-library(gt)
-library(htmltools) # Needed for save_html
-
-# Convert the gtsummary table to a gt object, then to renderable HTML
-table1_renderable_html <- table1 |>
-  as_gt() |>
-  as_raw_html() # Get the HTML code
-
-# Save the HTML to a file
-# This creates a file named "table1_baseline.html" in your working directory
-# (the folder where your Rmd script is or where RStudio is currently pointing)
-save_html(html = table1_renderable_html, file = "table1_baseline.html")
-
-# ----- Manual steps after running the R code -----
-# 1. Open the "table1_baseline.html" file in a web browser (Chrome, Firefox, etc.).
-# 2. Once the table is displayed in the browser, select it using your mouse.
-# 3. Copy the selected table (Ctrl+C or Cmd+C).
-# 4. Paste the table into your Google Docs document (Ctrl+V or Cmd+V).
-#    Often, Google Docs will do a good job of retaining the formatting.
-#    If the formatting isn't perfect, you might try "Paste without formatting"
-#    and then apply basic table styles within Google Docs.
-```
-
-## Table 2. Mixed Models
-
-```{r mixed_models_summary_table_en}
 # Ensure the sjPlot package is loaded (it's in your setup chunk)
 # library(sjPlot)
 
-# Create the table with tab_model
+# Create the table with tab_model, including ALL models in order
 summary_mixed_models_table <- tab_model(
+  # Body Composition Models
   model1,                # Total Lean Mass
   model_la,              # Arm Lean Mass
-  # ... (otros modelos) ...
+  model_ll,              # Leg Lean Mass
+
+  # Strength Models
+  model_lp,              # Leg Press 1RM
+  model_iso_bp,          # Isometric Bench Press
+  model_bp,              # Dynamic Bench Press 1RM
+  model_imtp,            # IMTP
+  model_biodex_away,     # Biodex Away
   model_biodex_towards,  # Biodex Towards
+
   dv.labels = c(
+    # Labels for Body Composition Models
     "Total Lean Mass (kg)",
     "Arm Lean Mass (kg)",
-    # ... (otras etiquetas) ...
+    "Leg Lean Mass (kg)",
+
+    # Labels for Strength Models
+    "Leg Press 1RM (kg)",
+    "Isometric Bench Press (kg)",
+    "Dynamic Bench Press 1RM (kg)",
+    "IMTP (kg)",
+    "Biodex Away (kg)",
     "Biodex Towards (kg)"
   ),
   show.obs = FALSE,
-  show.re.var = TRUE,
-  show.ngroups = FALSE,
-  p.style = "numeric_stars",
+  show.re.var = TRUE,      # Show random effect variances
+  show.ngroups = FALSE,    # Do not show number of random effect groups
+  p.style = "numeric_stars", # Show p-values as numbers with significance stars
   string.pred = "Predictor",
   string.est = "Estimate (95% CI)",
-  collapse.ci = TRUE,
-  title = "Summary of Linear Mixed-Effects Models"
+  collapse.ci = TRUE,      # Collapse CI into one column
+  title = "Summary of Linear Mixed-Effects Models" # You can adjust this title if needed
 )
 
 # Display the table
