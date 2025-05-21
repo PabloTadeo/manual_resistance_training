@@ -225,6 +225,36 @@ library(emmeans)
 emm_ll <- emmeans(model_ll, ~ time | group)
 contrast(emm_ll, method = "pairwise")
 ```
+## Table 2: Summary of Mixed Models for Body Composition Variables
+
+```{r mixed_models_summary_table_dexa_en}
+# library(sjPlot) # Ensure sjPlot is loaded
+
+# Table for Body Composition models
+table_mixed_models_dexa <- tab_model(
+  model1,                # Total Lean Mass
+  model_la,              # Arm Lean Mass
+  model_ll,              # Leg Lean Mass
+  dv.labels = c(
+    "Total Lean Mass (kg)",
+    "Arm Lean Mass (kg)",
+    "Leg Lean Mass (kg)"
+  ),
+  show.obs = FALSE,
+  show.re.var = TRUE,
+  show.ngroups = FALSE,
+  p.style = "numeric_stars",
+  string.pred = "Predictor",
+  string.est = "Estimate (95% CI)",
+  collapse.ci = TRUE,
+  title = "Summary of Mixed Models: Body Composition Variables"
+)
+
+# Display the table
+table_mixed_models_dexa
+```
+
+
 ## iso benh press
 ```{r}
 model_iso_bp <- lmer(max_isometric_bp ~ time*group + weight_scale + (1|id), data=merged_df)
