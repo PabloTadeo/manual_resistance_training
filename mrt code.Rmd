@@ -610,6 +610,43 @@ ggsave("Forest_ACME_ADE_BiodexTowards_LKT.png", # Adjusted filename
        p_bdt, width = 6.5, height = 4.5, dpi = 300)
 ```
 
+## Table 3: Summary of Mixed Models for Strength Variables
+
+```{r}
+## Table 2.2: Summary of Mixed Models for Strength Variables
+
+```{r mixed_models_summary_table_strength_en}
+# library(sjPlot) # Ensure sjPlot is loaded
+
+# Table for Strength models
+table_mixed_models_strength <- tab_model(
+  model_lp,              # Leg Press 1RM
+  model_iso_bp,          # Isometric Bench Press
+  model_bp,              # Dynamic Bench Press 1RM
+  model_imtp,            # IMTP
+  model_biodex_away,     # Biodex Away
+  model_biodex_towards,  # Biodex Towards
+  dv.labels = c(
+    "Leg Press 1RM (kg)",
+    "Isometric Bench Press (kg)",
+    "Dynamic Bench Press 1RM (kg)",
+    "IMTP (kg)",
+    "Biodex Away (kg)",
+    "Biodex Towards (kg)"
+  ),
+  show.obs = FALSE,
+  show.re.var = TRUE,
+  show.ngroups = FALSE,
+  p.style = "numeric_stars",
+  string.pred = "Predictor",
+  string.est = "Estimate (95% CI)",
+  collapse.ci = TRUE,
+  title = "Summary of Mixed Models: Strength Variables"
+)
+
+# Display the table
+table_mixed_models_strength
+```
 
 ### table
 ```{r}
