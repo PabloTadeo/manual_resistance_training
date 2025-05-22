@@ -612,9 +612,6 @@ ggsave("Forest_ACME_ADE_BiodexTowards_LKT.png", # Adjusted filename
 
 ## Table 3: Summary of Mixed Models for Strength Variables
 
-```{r}
-## Table 2.2: Summary of Mixed Models for Strength Variables
-
 ```{r mixed_models_summary_table_strength_en}
 # library(sjPlot) # Ensure sjPlot is loaded
 
@@ -649,6 +646,7 @@ table_mixed_models_strength
 ```
 
 ### table
+
 ```{r}
 library(sjPlot)
 tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups = FALSE#, #show.p = FALSE, #p.style = "numeric_stars")
@@ -658,6 +656,101 @@ tab_model(model1,model_lp, show.obs = FALSE,  show.re.var = TRUE, show.ngroups =
 ```{r}
 emm_overall <- emmeans(model_lp_t, ~ time | group*sex)
 contrast(emm_overall, method = "pairwise")
+```
+
+## Figure: Visualization of Within-Group Pre- to Post-Intervention Changes
+
+```{r figure_contrasts_en, dependson="create_all_contrasts_summary_df_en", fig.width=14, fig.height=10}
+# Ensure ggplot2 is loaded (it's part of tidyverse, usually loaded in setup)
+# library(ggplot2)
+# Ensure all_contrasts_summary_df is available from the previous chunk
+
+# Prepare data for plotting: ensure factor orders are correct for display
+plot_data_contrasts <- all_contrasts_summary_df |>
+  mutate(
+    # Ensure variable_name_long is ordered as intended for the facets
+    variable_name_long = factor(variable_name_long, levels = unique(all_contrast_data$variable_name_long)),
+    # Ensure group order is correct for legend and plotting
+    group = factor(group, levels = c("Control", "MRT", "WRT")),
+    # Create a label for plotting that combines mean_change and significance stars
+    # This can be used if geom_text for stars alone is tricky with dodging
+    # For now, we'll plot stars separately.
+    # Adjust y-position for significance stars slightly to avoid overlap with error bar caps
+    star_y_position = ifelse(group == "Control", 0.9, ifelse(group == "MRT", 1.0, 1.1)) # Arbitrary small dodge for stars
+  )
+
+# Create the plot
+spectacular_contrast_figure <- ggplot(plot_data_contrasts, 
+                                      aes(x = mean_change, 
+                                          y = group, # Groups on y-axis within each facet
+                                          xmin = ci_lower, 
+                                          xmax = ci_upper, 
+                                          color = group,
+                                          shape = group)) +
+  # Vertical line at zero (no change)
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey60", linewidth = 0.7) +
+  
+  # Points and error bars
+  geom_pointrange(position = position_dodge(width = 0.7), 
+                  size = 0.8,        # Size of the point
+                  linewidth = 0.7) +  # Thickness of the error bar lines
+                  
+  # Add significance stars
+  # We'll position them slightly to the right of the upper CI limit
+  geom_text(aes(label = significance, x = ci_upper + (0.03 * abs(ci_upper - ci_lower))), # Adjust x for spacing
+            # x = ci_upper (Alternative, might need nudge_x)
+            # y = group (will also be dodged)
+            vjust = 0.5, # Vertical alignment
+            hjust = 0,   # Horizontal alignment (0 = right of point, 1 = left of point)
+            size = 5, 
+            position = position_dodge(width = 0.7), # Important for stars to align with dodged points
+            show.legend = FALSE) +
+  
+  # Facet by variable - each variable gets its own panel
+  # Using variable_short_name if preferred for shorter titles, or variable_name_long
+  facet_wrap(~ variable_name_long, 
+             ncol = 3,            # Number of columns for facets (3x3 grid for 9 variables)
+             scales = "free_x") + # Crucial: allows x-axis to differ for each variable
+             
+  # Scales and Labels
+  scale_color_manual(values = c("Control" = "black", "MRT" = "#0072B2", "WRT" = "#D55E00"), 
+                     name = "Intervention Group") +
+  scale_shape_manual(values = c("Control" = 15, "MRT" = 17, "WRT" = 19), # Square, Triangle, Circle
+                     name = "Intervention Group") +
+  labs(
+    title = "Pre- to Post-Intervention Changes by Group and Variable",
+    subtitle = "Data points represent mean change with 95% Confidence Intervals. Stars indicate p-value significance.",
+    x = "Mean Change (kg or units, from pre- to post-intervention)",
+    y = NULL # Group names will be on y-axis ticks
+  ) +
+  
+  # Theme adjustments
+  theme_bw(base_size = 12) + # A clean base theme
+  theme(
+    legend.position = "top",
+    legend.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold", size = 10), # Facet titles
+    strip.background = element_rect(fill = "grey95", color = "grey70"),
+    panel.grid.major.x = element_line(linetype = "dotted", color = "grey85"),
+    panel.grid.minor.x = element_blank(),
+    panel.spacing.y = unit(1.2, "lines"), # Spacing between facet rows
+    panel.spacing.x = unit(1.2, "lines"), # Spacing between facet columns
+    axis.text.y = element_text(size = 10, face = "bold"), # Bolder group names on y-axis
+    axis.title.x = element_text(size = 11, face = "bold", margin = margin(t = 10)), # X-axis title
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, margin = margin(b = 15)),
+    plot.margin = unit(c(1, 1, 1, 1), "cm") # Add some margin around the plot
+  )
+
+# Display the figure
+print(spectacular_contrast_figure)
+
+# To save the figure:
+# ggsave("figure_within_group_changes_spectacular.png", 
+#        plot = spectacular_contrast_figure, 
+#        width = 14,  # Adjust width as needed
+#        height = 10, # Adjust height as needed
+#        dpi = 300)
 ```
 
 
