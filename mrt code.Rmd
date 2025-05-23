@@ -269,14 +269,14 @@ contrast(emm_iso_bp, method = "pairwise")
 ```
 ### Forest Plot iso bench
 
-```{r forest_plot_iso_bp}
-# Ensure necessary libraries are loaded (dplyr, ggplot2, scales)
-# library(dplyr) # Typically loaded in setup
+```{r}
+# Ensure necessary libraries are loaded
+# library(dplyr)   # Typically loaded in setup
 # library(ggplot2) # Typically loaded in setup
-# library(scales) # Typically loaded in setup
+library(scales)  # For label_wrap and pretty_breaks
 
-# 1. Helper function to extract ACME & ADE (remains the same)
-extract_med_iso_bp <- function(obj, label){ # Renamed for clarity if running interactively
+# 1. Helper function to extract ACME & ADE (remains the same or use global one)
+extract_med_iso_bp <- function(obj, label){ 
   data.frame(
     term      = c("ACME", "ADE"),
     estimate  = c(obj$d.avg,  obj$z.avg),
@@ -287,10 +287,7 @@ extract_med_iso_bp <- function(obj, label){ # Renamed for clarity if running int
 }
 
 # 2. Build plotting data frame for Isometric Bench Press
-#    Replace with your actual mediation objects for IsoBP
-#    These are examples based on our naming convention:
-#    mediation_mrt_LKT_isoBP, mediation_wrt_LKT_isoBP, mediation_rt_LKT_isoBP
-
+#    Using the mediation objects for IsoBP mediated by LKT
 df_forest_iso_bp <- bind_rows(
   extract_med_iso_bp(mediation_mrt_LKT_isoBP, "MRT vs Control"),
   extract_med_iso_bp(mediation_wrt_LKT_isoBP, "WRT vs Control"),
@@ -299,7 +296,7 @@ df_forest_iso_bp <- bind_rows(
   mutate(contrast = factor(contrast,
                            levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
 
-# 3. Forest plot for Isometric Bench Press
+# 3. Forest plot for Isometric Bench Press with auto-wrapped and centered title
 p_iso_bp <- ggplot(df_forest_iso_bp,
                    aes(estimate, contrast, colour = term)) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
@@ -311,18 +308,26 @@ p_iso_bp <- ggplot(df_forest_iso_bp,
                       labels = c("Indirect (ACME)", "Direct (ADE)"),
                       name   = NULL) +
   scale_x_continuous(breaks = pretty_breaks(7)) +
-  labs(x = "Effect on Isometric Bench Press (units)", # Adjusted X-axis label
+  labs(x = "Effect on Isometric Bench Press (units)", 
        y = NULL,
-       title = "Indirect (LKT-mediated) and direct effects on Isometric Bench Press") + # Adjusted title
+       title = scales::label_wrap(45)("Indirect (LKT-mediated) and direct effects on Isometric Bench Press")) + # ADJUSTED TITLE
   theme_minimal(base_size = 13) +
   theme(legend.position    = "top",
-        panel.grid.major.y = element_blank())
+        panel.grid.major.y = element_blank(),
+        plot.title = element_text(hjust = 0.5) # Center the title
+        ) 
 
+# Print the plot
 print(p_iso_bp)
 
-ggsave("Forest_ACME_ADE_IsoBenchPress_LKT.png", # Adjusted filename
-       p_iso_bp, width = 6.5, height = 4.5, dpi = 300)
+# Save the plot
+ggsave("Forest_ACME_ADE_IsoBenchPress_LKT.png", 
+       plot = p_iso_bp, 
+       width = 6.5, 
+       height = 4.7, # Slightly increased height for potentially wrapped title
+       dpi = 300)
 ```
+
 
 ## dynamic bench press (1RM) 
 
@@ -340,21 +345,17 @@ contrast(emm_bp, method = "pairwise")
 ```
 ### Forest Plot Dynamic Bench Press (mediated by Lean Mass Total)
 
-```{r forest_plot_dynamic_bp}
+```{r forest_plot_dynamic_bp_wrapped_title}
 # Ensure necessary libraries are loaded
-# library(dplyr) # Typically loaded in setup
-# library(ggplot2) # Typically loaded in setup
-# library(scales) # Typically loaded in setup
+# library(dplyr)
+# library(ggplot2)
+library(scales) # For label_wrap and pretty_breaks
 
-# 1. Helper function to extract ACME & ADE from a mediate object 
-#    (This function can be defined once globally in your Rmd)
-#    If you haven't defined it globally, you can include it here.
-#    For this example, I'll assume it might be redefined or named uniquely
-#    if you prefer to keep each plot's code self-contained.
+# 1. Helper function to extract ACME & ADE from a mediate object
 extract_med_dbp <- function(obj, label){ # DBP for Dynamic Bench Press
   data.frame(
     term      = c("ACME", "ADE"),
-    estimate  = c(obj$d.avg,  obj$z.avg), # obj$d.avg is ACME, obj$z.avg is ADE
+    estimate  = c(obj$d.avg,  obj$z.avg),
     conf.low  = c(obj$d.avg.ci[1], obj$z.avg.ci[1]),
     conf.high = c(obj$d.avg.ci[2], obj$z.avg.ci[2]),
     contrast  = label
@@ -362,9 +363,6 @@ extract_med_dbp <- function(obj, label){ # DBP for Dynamic Bench Press
 }
 
 # 2. Build plotting data frame for Dynamic Bench Press
-#    Using the mediation objects for Dynamic Bench Press (max_onerm_bp)
-#    mediated by Lean Mass Total (LKT)
-
 df_forest_dbp <- bind_rows(
   extract_med_dbp(mediation_mrt_LKT_maxBP, "MRT vs Control"),
   extract_med_dbp(mediation_wrt_LKT_maxBP, "WRT vs Control"),
@@ -373,29 +371,36 @@ df_forest_dbp <- bind_rows(
   mutate(contrast = factor(contrast,
                            levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
 
-# 3. Forest plot for Dynamic Bench Press
+# 3. Forest plot for Dynamic Bench Press with auto-wrapped title
 p_dbp <- ggplot(df_forest_dbp,
                 aes(estimate, contrast, colour = term)) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
   geom_pointrange(aes(xmin = conf.low, xmax = conf.high),
                   position = position_dodge(width = .6), size = .9) +
   geom_text(aes(label = round(estimate, 1)),
-            nudge_y  = 0.25, size = 3.3, colour = "black") + # [cite: 1]
-  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"), # [cite: 1]
-                      labels = c("Indirect (ACME)", "Direct (ADE)"), # [cite: 1]
-                      name   = NULL) + # [cite: 1]
-  scale_x_continuous(breaks = pretty_breaks(7)) + # [cite: 1]
-  labs(x = "Effect on Dynamic Bench Press 1RM (kg)", # Adjusted X-axis label
-       y = NULL, # [cite: 1]
-       title = "Indirect (LKT-mediated) and direct effects on Dynamic Bench Press") + # Adjusted title
-  theme_minimal(base_size = 13) + # [cite: 1]
-  theme(legend.position    = "top", # [cite: 1]
-        panel.grid.major.y = element_blank()) # [cite: 1]
+            nudge_y  = 0.25, size = 3.3, colour = "black") +
+  scale_colour_manual(values = c(ACME = "#0072B2", ADE = "#D55E00"),
+                      labels = c("Indirect (ACME)", "Direct (ADE)"),
+                      name   = NULL) +
+  scale_x_continuous(breaks = pretty_breaks(7)) +
+  labs(x = "Effect on Dynamic Bench Press 1RM (kg)", 
+       y = NULL, 
+       title = scales::label_wrap(45)("Indirect (LKT-mediated) and direct effects on Dynamic Bench Press")) + # ADJUSTED TITLE with label_wrap
+  theme_minimal(base_size = 13) +
+  theme(legend.position    = "top", 
+        panel.grid.major.y = element_blank(),
+        plot.title = element_text(hjust = 0.5) # Centrar el título
+        ) 
 
+# Print the plot
 print(p_dbp)
 
-ggsave("Forest_ACME_ADE_DynamicBenchPress_LKT.png", # Adjusted filename
-       p_dbp, width = 6.5, height = 4.5, dpi = 300) # [cite: 1]
+# Save the plot
+ggsave("Forest_ACME_ADE_DynamicBenchPress_LKT.png", 
+       plot = p_dbp, 
+       width = 6.5, 
+       height = 4.7, # Ligeramente aumentado por si el título ocupa más espacio vertical
+       dpi = 300)
 ```
 
 ## IMPT
@@ -484,11 +489,11 @@ contrast(emm_biodex_away, method = "pairwise")
 ```
 ### Forest Plot BIODEX Away (mediated by Lean Mass Total)
 
-```{r forest_plot_biodex_away}
+```{r}
 # Ensure necessary libraries are loaded
-# library(dplyr)
-# library(ggplot2)
-# library(scales)
+# library(dplyr)   # Typically loaded in setup
+# library(ggplot2) # Typically loaded in setup
+library(scales)  # For label_wrap and pretty_breaks
 
 # 1. Helper function to extract ACME & ADE from a mediate object 
 #    (Assuming 'extract_med' is globally defined or redefine/rename as needed)
@@ -505,7 +510,6 @@ extract_med_bda <- function(obj, label){ # BDA for BIODEX Away
 # 2. Build plotting data frame for BIODEX Away
 #    Using the mediation objects for 'away' (BIODEX Away)
 #    mediated by Lean Mass Total (LKT)
-
 df_forest_bda <- bind_rows(
   extract_med_bda(mediation_mrt_LKT_away, "MRT vs Control"),
   extract_med_bda(mediation_wrt_LKT_away, "WRT vs Control"),
@@ -514,7 +518,7 @@ df_forest_bda <- bind_rows(
   mutate(contrast = factor(contrast,
                            levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
 
-# 3. Forest plot for BIODEX Away
+# 3. Forest plot for BIODEX Away with auto-wrapped and centered title
 p_bda <- ggplot(df_forest_bda,
                 aes(estimate, contrast, colour = term)) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
@@ -526,17 +530,24 @@ p_bda <- ggplot(df_forest_bda,
                       labels = c("Indirect (ACME)", "Direct (ADE)"),
                       name   = NULL) +
   scale_x_continuous(breaks = pretty_breaks(7)) +
-  labs(x = "Effect on BIODEX Away (units)", # Adjusted X-axis label
+  labs(x = "Effect on BIODEX Away (units)", 
        y = NULL,
-       title = "Indirect (LKT-mediated) and direct effects on BIODEX Away") + # Adjusted title
+       title = scales::label_wrap(45)("Indirect (LKT-mediated) and direct effects on BIODEX Away")) + # ADJUSTED TITLE
   theme_minimal(base_size = 13) +
   theme(legend.position    = "top",
-        panel.grid.major.y = element_blank())
+        panel.grid.major.y = element_blank(),
+        plot.title = element_text(hjust = 0.5) # Center the title
+        ) 
 
+# Print the plot
 print(p_bda)
 
-ggsave("Forest_ACME_ADE_BiodexAway_LKT.png", # Adjusted filename
-       p_bda, width = 6.5, height = 4.5, dpi = 300)
+# Save the plot
+ggsave("Forest_ACME_ADE_BiodexAway_LKT.png", 
+       plot = p_bda, 
+       width = 6.5, 
+       height = 4.7, # Slightly increased height for potentially wrapped title
+       dpi = 300)
 ```
 
 
@@ -554,15 +565,13 @@ emm_biodex_towards <- emmeans(model_biodex_towards, ~ time | group)
 contrast(emm_biodex_towards, method = "pairwise")
 ```
 ### Forest Plot: BIODEX Towards (mediated by Lean Mass Total)
-
-```{r forest_plot_biodex_towards}
+```{r}
 # Ensure necessary libraries are loaded
-# library(dplyr)
-# library(ggplot2)
-# library(scales)
+# library(dplyr)   # Typically loaded in setup
+# library(ggplot2) # Typically loaded in setup
+library(scales)  # For label_wrap and pretty_breaks
 
 # 1. Helper function to extract ACME & ADE from a mediate object 
-#    (Assuming 'extract_med' is globally defined or redefine/rename as needed)
 extract_med_bdt <- function(obj, label){ # BDT for BIODEX Towards
   data.frame(
     term      = c("ACME", "ADE"),
@@ -576,7 +585,6 @@ extract_med_bdt <- function(obj, label){ # BDT for BIODEX Towards
 # 2. Build plotting data frame for BIODEX Towards
 #    Using the mediation objects for 'towards' (BIODEX Towards)
 #    mediated by Lean Mass Total (LKT)
-
 df_forest_bdt <- bind_rows(
   extract_med_bdt(mediation_mrt_LKT_towards, "MRT vs Control"),
   extract_med_bdt(mediation_wrt_LKT_towards, "WRT vs Control"),
@@ -585,7 +593,7 @@ df_forest_bdt <- bind_rows(
   mutate(contrast = factor(contrast,
                            levels = c("RT  vs Control", "WRT vs Control", "MRT vs Control")))
 
-# 3. Forest plot for BIODEX Towards
+# 3. Forest plot for BIODEX Towards with auto-wrapped and centered title
 p_bdt <- ggplot(df_forest_bdt,
                 aes(estimate, contrast, colour = term)) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = .4) +
@@ -597,17 +605,24 @@ p_bdt <- ggplot(df_forest_bdt,
                       labels = c("Indirect (ACME)", "Direct (ADE)"),
                       name   = NULL) +
   scale_x_continuous(breaks = pretty_breaks(7)) +
-  labs(x = "Effect on BIODEX Towards (units)", # Adjusted X-axis label
+  labs(x = "Effect on BIODEX Towards (units)", 
        y = NULL,
-       title = "Indirect (LKT-mediated) and direct effects on BIODEX Towards") + # Adjusted title
+       title = scales::label_wrap(45)("Indirect (LKT-mediated) and direct effects on BIODEX Towards")) + # ADJUSTED TITLE
   theme_minimal(base_size = 13) +
   theme(legend.position    = "top",
-        panel.grid.major.y = element_blank())
+        panel.grid.major.y = element_blank(),
+        plot.title = element_text(hjust = 0.5) # Center the title
+        ) 
 
+# Print the plot
 print(p_bdt)
 
-ggsave("Forest_ACME_ADE_BiodexTowards_LKT.png", # Adjusted filename
-       p_bdt, width = 6.5, height = 4.5, dpi = 300)
+# Save the plot
+ggsave("Forest_ACME_ADE_BiodexTowards_LKT.png", 
+       plot = p_bdt, 
+       width = 6.5, 
+       height = 4.7, # Slightly increased height for potentially wrapped title
+       dpi = 300)
 ```
 
 ## Table 3: Summary of Mixed Models for Strength Variables
